@@ -59,7 +59,8 @@ Requisitos mínimos necessários:
 - [Spring MVC](https://docs.spring.io/spring-framework/reference/web/webmvc.html)
 - [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
 - [Java Bean Validation](https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html)
-- [MYSQL Driver](https://spring.io/guides/gs/accessing-data-mysql)
+- [H2](https://www.h2database.com/html/main.html)
+- [Flyway](https://www.baeldung.com/database-migrations-with-flyway)
 - [Lombok](https://projectlombok.org/features/)
 - [AssertJ](https://assertj.github.io/doc/)
 
