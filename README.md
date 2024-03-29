@@ -64,6 +64,16 @@ Requisitos mínimos necessários:
 - [Lombok](https://projectlombok.org/features/)
 - [AssertJ](https://assertj.github.io/doc/)
 
+## Como Executar
+
+- Clonar repositório git:
+```
+git clone https://github.com/DaviGuarda/attus-desafio-back-end.git
+```
+- Executar a aplicação Spring Boot
+- Acessar aplicação em `http://localhost:8080`.
+- Coleção do Insomnia na branch collection, funciona tanto pro insomnia quanto pro postman.
+
 ## Diagrama de Classes - Formato Mermaid
 
 ```mermaid
