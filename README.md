@@ -3,7 +3,8 @@
 </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/static/v1?label=GitHub&message=DaviGuarda&color=F45000&labelColor=000000" alt="Desafio" />
+  <img src="https://img.shields.io/static/v1?label=Java&message=17&color=F45000&labelColor=000000" alt="GitHub" />
+  <img src="https://img.shields.io/static/v1?label=GitHub&message=DaviGuarda&color=F45000&labelColor=000000" alt="GitHub" />
  <img src="https://img.shields.io/static/v1?label=Tipo&message=Desafio&color=F45000&labelColor=000000" alt="Desafio" />
 </p>
 
