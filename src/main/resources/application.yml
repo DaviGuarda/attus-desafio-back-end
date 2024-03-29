@@ -1,11 +1,20 @@
 spring:
+  h2:
+    console:
+      enabled: true
   datasource:
-    url: jdbc:mysql://localhost:3306/attus_desafio_backend
-    username: root
-    password: 3285
-    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:h2:mem:attus_desafio_backend
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
   jpa:
+    spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
     show-sql: false
     open-in-view: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
