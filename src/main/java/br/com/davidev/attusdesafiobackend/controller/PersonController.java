@@ -18,13 +18,13 @@ public class PersonController {
 
     private final PersonService personService;
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<PersonDTO> create(@RequestBody @Valid PersonDTO data) {
         var person = personService.create(data);
         return ResponseEntity.status(HttpStatus.CREATED).body(person);
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<PersonDTO> update(@PathVariable(value = "id") Long id, @RequestBody @Valid PersonDTO data) {
         var person = personService.update(id, data);
         return ResponseEntity.status(HttpStatus.OK).body(person);
@@ -42,7 +42,7 @@ public class PersonController {
         return ResponseEntity.status(HttpStatus.OK).body(people);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable(value = "id") Long id) {
         personService.delete(id);
         return ResponseEntity.ok("Person deleted successfully!");
