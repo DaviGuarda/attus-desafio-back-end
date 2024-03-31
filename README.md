@@ -73,7 +73,7 @@ git clone https://github.com/DaviGuarda/attus-desafio-back-end.git
 ```
 - Executar a aplicação Spring Boot
 - Acessar aplicação em `http://localhost:8080`.
-- Link para download da coleção [Coleção](https://drive.usercontent.google.com/uc?id=1Qw-UxbqvUZ_l7mqIv9Cmx2R_-xP_bFRJ&export=download), funciona também para import no postman!
+- Link para download da coleção [Coleção](https://drive.usercontent.google.com/uc?id=1GcbmM-jKEGoX8BTbZJ8ZQLEBDmtJ-3H7&export=download), funciona também para import no postman!
 
 ## Diagrama de Classes - Formato Mermaid
 
