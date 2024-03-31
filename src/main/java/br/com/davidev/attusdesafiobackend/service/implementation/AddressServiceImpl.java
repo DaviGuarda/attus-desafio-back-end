@@ -69,7 +69,6 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    @Transactional
     public void setDefaultAddress(Long idPerson, Long idAddress) {
 
         var address = addressRepository.findById(idAddress)
