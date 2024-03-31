@@ -7,6 +7,7 @@ import br.com.davidev.attusdesafiobackend.repository.AddressRepository;
 import br.com.davidev.attusdesafiobackend.repository.PersonRepository;
 import br.com.davidev.attusdesafiobackend.service.AddressService;
 import br.com.davidev.attusdesafiobackend.util.ExceptionUtils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -68,6 +69,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @Transactional
     public void setDefaultAddress(Long idPerson, Long idAddress) {
 
         var address = addressRepository.findById(idAddress)
