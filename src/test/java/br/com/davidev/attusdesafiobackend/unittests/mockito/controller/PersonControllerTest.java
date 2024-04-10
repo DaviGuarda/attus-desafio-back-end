@@ -3,100 +3,136 @@ package br.com.davidev.attusdesafiobackend.unittests.mockito.controller;
 import br.com.davidev.attusdesafiobackend.controller.PersonController;
 import br.com.davidev.attusdesafiobackend.dto.PersonDTO;
 import br.com.davidev.attusdesafiobackend.service.PersonService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@WebMvcTest(PersonController.class)
 public class PersonControllerTest {
-
+    @Autowired
+    private MockMvc mockMvc;
+    @MockBean
     private PersonService personService;
-    private PersonController personController;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setUp() {
-        personService = mock(PersonService.class);
-        personController = new PersonController(personService);
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Test
-    public void shouldCreatePerson() {
-        PersonDTO personDTO = new PersonDTO(null, "John Doe", LocalDate.of(2003, 6,10), Collections.emptyList());
+    public void shouldCreatePerson() throws Exception {
+        var person = new PersonDTO(null, "John Doe", LocalDate.of(2003, 6, 10), Collections.emptyList());
+        var createdPerson = new PersonDTO(1L, "John Doe", LocalDate.of(2003, 6, 10), Collections.emptyList());
 
-        PersonDTO createdPerson = new PersonDTO(1L, "John Doe", LocalDate.of(2003, 6,10), Collections.emptyList());
 
-        when(personService.create(personDTO)).thenReturn(createdPerson);
+        when(personService.create(person)).thenReturn(createdPerson);
 
-        ResponseEntity<PersonDTO> response = personController.create(personDTO);
+        mockMvc.perform(post("/api/person/v1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(person)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.full_name").value("John Doe"))
+                .andExpect(jsonPath("$.date_birth").value("2003-06-10"));
 
-        assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
-        assertThat(createdPerson).isEqualTo(response.getBody());
-        verify(personService, times(1)).create(personDTO);
+        verify(personService, times(1)).create(person);
     }
 
     @Test
-    public void shouldUpdatePerson() {
-        Long id = 1L;
-        PersonDTO personDTO = new PersonDTO(null, "John Doe", LocalDate.of(2003, 6,10), Collections.emptyList());
+    public void shouldReturnBadRequestWhenPersonDtoIsInvalid() throws Exception {
+        var invalidPerson = new PersonDTO(null, "name invalid", LocalDate.of(2003, 6, 10), Collections.emptyList());
 
-        PersonDTO updatedPerson = new PersonDTO(id, "John Doe", LocalDate.of(2003, 6,10), Collections.emptyList());
+        String invalidPersonJson = objectMapper.writeValueAsString(invalidPerson);
 
-        when(personService.update(id, personDTO)).thenReturn(updatedPerson);
-
-        ResponseEntity<PersonDTO> response = personController.update(id, personDTO);
-
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(updatedPerson).isEqualTo(response.getBody());
-        verify(personService, times(1)).update(id, personDTO);
+        mockMvc.perform(post("/api/person/v1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidPersonJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("[fullName: Name field must start with a capital letter]"));
     }
 
     @Test
-    public void shouldFindByIdPerson() {
-        Long id = 1L;
-        PersonDTO personDTO = new PersonDTO(id, "John Doe", LocalDate.of(2003, 6,10), Collections.emptyList());
+    public void shouldUpdatePerson() throws Exception {
+        var person = new PersonDTO(1L, "John Doe", LocalDate.of(2003, 6, 10), Collections.emptyList());
 
-        when(personService.findById(id)).thenReturn(personDTO);
+        var updatedPerson = new PersonDTO(1L, "John Dev", LocalDate.of(2003, 6, 10), Collections.emptyList());
 
-        ResponseEntity<PersonDTO> response = personController.findById(id);
+        when(personService.update(1L, person)).thenReturn(updatedPerson);
 
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(personDTO).isEqualTo(response.getBody());
-        verify(personService, times(1)).findById(id);
+        mockMvc.perform(put("/api/person/v1/{id}", person.id())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(person)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.full_name").value("John Dev"))
+                .andExpect(jsonPath("$.date_birth").value("2003-06-10"));
+
+        verify(personService, times(1)).update(1L, person);
     }
 
     @Test
-    public void shouldFindAllPeople() {
+    public void shouldFindByIdPerson() throws Exception {
+        var person = new PersonDTO(1L, "John Doe", LocalDate.of(2003, 6, 10), Collections.emptyList());
+
+        when(personService.findById(1L)).thenReturn(person);
+
+        mockMvc.perform(get("/api/person/v1/{id}", person.id())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(person)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.full_name").value("John Doe"))
+                .andExpect(jsonPath("$.date_birth").value("2003-06-10"));
+
+        verify(personService, times(1)).findById(1L);
+    }
+
+    @Test
+    public void shouldFindAllPeople() throws Exception {
         List<PersonDTO> people = new ArrayList<>();
-        PersonDTO person1 = new PersonDTO(1L, "John Doe", LocalDate.of(2003, 6,10), Collections.emptyList());
+        var person1 = new PersonDTO(1L, "John Doe", LocalDate.of(2003, 6, 10), Collections.emptyList());
         people.add(person1);
-        PersonDTO person2 = new PersonDTO(2L, "Jane Smith", LocalDate.of(2003, 6,10), Collections.emptyList());
+        var person2 = new PersonDTO(2L, "Jane Smith", LocalDate.of(2003, 6, 10), Collections.emptyList());
         people.add(person2);
 
         when(personService.findAll()).thenReturn(people);
 
-        ResponseEntity<List<PersonDTO>> response = personController.findAll();
+        mockMvc.perform(get("/api/person/v1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].full_name").value("John Doe"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].full_name").value("Jane Smith"));
 
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(people).isEqualTo(response.getBody());
         verify(personService, times(1)).findAll();
     }
 
     @Test
-    public void shouldDeletePerson() {
-        Long id = 1L;
+    public void shouldDeletePerson() throws Exception {
+        var person = new PersonDTO(1L, "John Doe", LocalDate.of(2003, 6, 10), Collections.emptyList());
 
-        ResponseEntity<?> response = personController.delete(id);
+        mockMvc.perform(delete("/api/person/v1/{id}", person.id()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Person deleted successfully!")));
 
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat("Person deleted successfully!").isEqualTo(response.getBody());
-        verify(personService, times(1)).delete(id);
+        verify(personService, times(1)).delete(1L);
     }
 }
