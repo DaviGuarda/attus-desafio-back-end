@@ -1,32 +1,42 @@
 package br.com.davidev.attusdesafiobackend.unittests.mockito.controller;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+
+import br.com.davidev.attusdesafiobackend.controller.AddressController;
+import br.com.davidev.attusdesafiobackend.dto.AddressDTO;
+import br.com.davidev.attusdesafiobackend.service.AddressService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import br.com.davidev.attusdesafiobackend.controller.AddressController;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import br.com.davidev.attusdesafiobackend.dto.AddressDTO;
-import br.com.davidev.attusdesafiobackend.service.AddressService;
-
+@WebMvcTest(AddressController.class)
 public class AddressControllerTest {
 
+    @Autowired
+    private MockMvc mockMvc;
+    @MockBean
     private AddressService addressService;
-    private AddressController addressController;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setUp() {
-        addressService = mock(AddressService.class);
-        addressController = new AddressController(addressService);
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Test
-    public void shouldCreateAddress() {
+    public void shouldCreateAddress() throws Exception {
         Long id = 1L;
         AddressDTO data = new AddressDTO(
                 null,
@@ -48,15 +58,23 @@ public class AddressControllerTest {
         );
         when(addressService.create(id, data)).thenReturn(expectedAddress);
 
-        ResponseEntity<AddressDTO> response = addressController.create(id, data);
+        mockMvc.perform(post("/api/addresses/v1/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(data)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.street_address").value("Street Address"))
+                .andExpect(jsonPath("$.zip_code").value("Zip Code"))
+                .andExpect(jsonPath("$.house_number").value(10))
+                .andExpect(jsonPath("$.city").value("City"))
+                .andExpect(jsonPath("$.province").value("Province"))
+                .andExpect(jsonPath("$.defaultAddress").value(true));
 
         verify(addressService, times(1)).create(id, data);
-        assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
-        assertThat(expectedAddress).isEqualTo(response.getBody());
     }
 
     @Test
-    public void shouldUpdateAddress() {
+    public void shouldUpdateAddress() throws Exception {
         Long idAddress = 1L;
         Long idPerson = 1L;
         AddressDTO data = new AddressDTO(
@@ -68,38 +86,40 @@ public class AddressControllerTest {
                 "Province",
                 false
         );
-        AddressDTO expectedAddress = new AddressDTO(
-                1L,
-                "Street Address",
-                "Zip Code",
-                10,
-                "City",
-                "Province",
-                false
-        );
-        when(addressService.update(idAddress, idPerson, data)).thenReturn(expectedAddress);
 
-        ResponseEntity<AddressDTO> response = addressController.update(idAddress, idPerson, data);
+        when(addressService.update(idAddress, idPerson, data)).thenReturn(data);
+
+        mockMvc.perform(put("/api/addresses/v1/{idAddress}/{idPerson}", idAddress, idPerson)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(data)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.street_address").value("Street Address"))
+                .andExpect(jsonPath("$.zip_code").value("Zip Code"))
+                .andExpect(jsonPath("$.house_number").value(10))
+                .andExpect(jsonPath("$.city").value("City"))
+                .andExpect(jsonPath("$.province").value("Province"))
+                .andExpect(jsonPath("$.defaultAddress").value(false));
 
         verify(addressService, times(1)).update(idAddress, idPerson, data);
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(expectedAddress).isEqualTo(response.getBody());
     }
 
     @Test
-    public void shouldSetDefaultAddress() {
+    public void shouldSetDefaultAddress() throws Exception {
         Long idPerson = 1L;
         Long idAddress = 1L;
 
-        ResponseEntity<?> response = addressController.setDefaultAddress(idPerson, idAddress);
+        doNothing().when(addressService).setDefaultAddress(idPerson, idAddress);
+
+        mockMvc.perform(patch("/api/addresses/v1/{idPerson}/{idAddress}", idPerson, idAddress))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Address set as default successfully!"));
 
         verify(addressService, times(1)).setDefaultAddress(idPerson, idAddress);
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat("Address set as default successfully!").isEqualTo(response.getBody());
     }
 
     @Test
-    public void shouldFindByIdAddress() {
+    public void shouldFindByIdAddress() throws Exception {
         Long id = 1L;
         AddressDTO expectedAddress = new AddressDTO(
                 1L,
@@ -110,35 +130,80 @@ public class AddressControllerTest {
                 "Province",
                 false
         );
+
         when(addressService.findById(id)).thenReturn(expectedAddress);
 
-        ResponseEntity<AddressDTO> response = addressController.findById(id);
+        mockMvc.perform(get("/api/addresses/v1/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.street_address").value("Street Address"))
+                .andExpect(jsonPath("$.zip_code").value("Zip Code"))
+                .andExpect(jsonPath("$.house_number").value(10))
+                .andExpect(jsonPath("$.city").value("City"))
+                .andExpect(jsonPath("$.province").value("Province"))
+                .andExpect(jsonPath("$.defaultAddress").value(false));
 
         verify(addressService, times(1)).findById(id);
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(expectedAddress).isEqualTo(response.getBody());
     }
 
     @Test
-    public void shouldFindAllAddresses() {
-        List<AddressDTO> expectedAddresses = new ArrayList<>();
+    public void shouldFindAllAddresses() throws Exception {
+        List<AddressDTO> expectedAddresses = getAddressDTOS();
+
+
         when(addressService.findAll()).thenReturn(expectedAddresses);
 
-        ResponseEntity<List<AddressDTO>> response = addressController.findAll();
+        mockMvc.perform(get("/api/addresses/v1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].street_address").value("Street Address"))
+                .andExpect(jsonPath("$[0].zip_code").value("Zip Code"))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].street_address").value("Street Address2"))
+                .andExpect(jsonPath("$[1].zip_code").value("Zip Code2"));
 
         verify(addressService, times(1)).findAll();
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(expectedAddresses).isEqualTo(response.getBody());
     }
 
     @Test
-    public void shouldDeleteAddress() {
+    public void shouldDeleteAddress() throws Exception {
         Long id = 1L;
 
-        ResponseEntity<?> response = addressController.delete(id);
+        doNothing().when(addressService).delete(id);
+
+        mockMvc.perform(delete("/api/addresses/v1/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Address deleted successfully!"));
 
         verify(addressService, times(1)).delete(id);
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat("Address deleted successfully!").isEqualTo(response.getBody());
+    }
+
+    private static List<AddressDTO> getAddressDTOS() {
+        List<AddressDTO> expectedAddresses = new ArrayList<>();
+
+        AddressDTO data1 = new AddressDTO(
+                1L,
+                "Street Address",
+                "Zip Code",
+                10,
+                "City",
+                "Province",
+                false
+        );
+
+        expectedAddresses.add(data1);
+
+        AddressDTO data2 = new AddressDTO(
+                2L,
+                "Street Address2",
+                "Zip Code2",
+                10,
+                "City2",
+                "Province2",
+                false
+        );
+
+        expectedAddresses.add(data2);
+        return expectedAddresses;
     }
 }
